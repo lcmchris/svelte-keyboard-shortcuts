@@ -14,6 +14,7 @@
 			onclick={handleOnClick}>Press p to click button</button
 		>
 		<div use:shortcuts={{ keys: ['c'] }} tabindex="2">Press C to Focus on me!</div>
+		<div use:shortcuts={{ keys: ['Delete'] }} tabindex="2">Press Delete to Focus on me!</div>
 
 		<label>
 			F to focus on me

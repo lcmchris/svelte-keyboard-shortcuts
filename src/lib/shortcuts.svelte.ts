@@ -115,6 +115,7 @@ type NumericKeypadKeys =
 	| '7'
 	| '8'
 	| '9';
+type EditingKeys = "Backspace" | "Clear" | "Copy" | "CrSel" | "Cut" | "Delete" | "EraseEof" | "ExSel" | "Insert" | "Paste" | "Redo" | "Undo"
 
 export type AllKeys =
 	| GeneralKeys
@@ -122,7 +123,8 @@ export type AllKeys =
 	| WhitespaceKeys
 	| NavigationKeys
 	| FunctionKeys
-	| NumericKeypadKeys;
+	| NumericKeypadKeys
+	| EditingKeys;
 
 export let keyPressesState = $state<Array<AllKeys>>([]);
 export const resetKeyPressesState = () => {
@@ -146,9 +148,9 @@ export const shortcuts: Action<HTMLElement, params | undefined> = (
 ) => {
 	/* Attach a listener for keys when the node is attached.
 
-    Types of action
-    - Run callback if function [x]
-    - Set focus if element [x]
+	Types of action
+	- Run callback if function [x]
+	- Set focus if element [x]
 	- Click if <a> or <button>
 	
 	Based upon:
@@ -194,15 +196,15 @@ export const shortcuts: Action<HTMLElement, params | undefined> = (
 
 	let handleKeyboardShortcut: (keyPresses: Array<AllKeys>) => void;
 	if (type == 'callback' && fn) {
-		handleKeyboardShortcut = (keyPresses) => {
+		handleKeyboardShortcut = () => {
 			fn();
 		};
 	} else if (type == 'focus') {
-		handleKeyboardShortcut = (keyPresses) => {
+		handleKeyboardShortcut = () => {
 			node.focus();
 		};
 	} else if (type == 'click') {
-		handleKeyboardShortcut = (keyPresses) => {
+		handleKeyboardShortcut = () => {
 			node.click();
 		};
 	}
@@ -214,7 +216,7 @@ export const shortcuts: Action<HTMLElement, params | undefined> = (
 				handleKeyboardShortcut(keyPressesState);
 				resetKeyPressesState();
 			}
-			return () => {};
+			return () => { };
 		});
 
 		return () => {
