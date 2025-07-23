@@ -17,7 +17,6 @@ export function setAppOptions(options?: AppOptions) {
 	defaultOptions = { ...defaultOptions, ...options };
 	return defaultOptions;
 }
-
 type GeneralKeys =
 	| 'a'
 	| 'b'
@@ -44,23 +43,21 @@ type GeneralKeys =
 	| 'w'
 	| 'x'
 	| 'y'
-	| 'z';
-type ModifierKeys =
-	| 'Alt'
-	| 'AltGraph'
-	| 'CapsLock'
-	| 'Control'
-	| 'Fn'
-	| 'FnLock'
-	| 'Hyper'
-	| 'Meta'
-	| 'NumLock'
-	| 'ScrollLock'
-	| 'Shift'
-	| 'Super'
-	| 'Symbol'
-	| 'SymbolLock';
-type WhitespaceKeys = 'Enter' | 'Tab' | ' ';
+	| 'z'
+	| '['
+	| ']'
+	| '-'
+	| '='
+	| ';'
+	| "'"
+	| ','
+	| '.'
+	| '/'
+	| '\\'
+	| '`';
+export type PressModifiers = 'Alt' | 'Control' | 'Meta' | 'Shift';
+type ModifierKeys = PressModifiers | 'CapsLock' | 'Fn' | 'Meta' | 'NumLock' | 'ScrollLock';
+type WhitespaceKeys = 'Enter' | 'Tab' | 'Space';
 type NavigationKeys =
 	| 'ArrowDown'
 	| 'ArrowLeft'
@@ -90,21 +87,15 @@ type FunctionKeys =
 	| 'F17'
 	| 'F18'
 	| 'F19'
-	| 'F20'
-	| 'Soft1'
-	| 'Soft2'
-	| 'Soft3'
-	| 'Soft4';
+	| 'F20';
 type NumericKeypadKeys =
-	| 'Decimal'
-	| 'Key11'
-	| 'Key12'
-	| 'Multiply'
-	| 'Add'
-	| 'Clear'
-	| 'Divide'
-	| 'Subtract'
-	| 'Separator'
+	| 'NumpadDecimal'
+	| 'NumpadEqual'
+	| 'NumpadMultiply'
+	| 'NumpadAdd'
+	| 'NumpadDivide'
+	| 'NumpadSubtract'
+	| 'NumpadEnter'
 	| '0'
 	| '1'
 	| '2'
@@ -115,7 +106,17 @@ type NumericKeypadKeys =
 	| '7'
 	| '8'
 	| '9';
-type EditingKeys = "Backspace" | "Clear" | "Copy" | "CrSel" | "Cut" | "Delete" | "EraseEof" | "ExSel" | "Insert" | "Paste" | "Redo" | "Undo"
+type EditingKeys =
+	| 'Backspace'
+	| 'Clear'
+	| 'Copy'
+	| 'Cut'
+	| 'Delete'
+	| 'Insert'
+	| 'Paste'
+	| 'Find'
+	| 'Help'
+	| 'Undo';
 
 export type AllKeys =
 	| GeneralKeys
@@ -126,12 +127,13 @@ export type AllKeys =
 	| NumericKeypadKeys
 	| EditingKeys;
 
-export let keyPressesState = $state<Array<AllKeys>>([]);
+export const keyPressesState = $state<Array<AllKeys>>([]);
 export const resetKeyPressesState = () => {
 	keyPressesState.length = 0;
 };
 type params = {
 	keys?: Array<AllKeys>;
+	modifiers?: false | Array<PressModifiers> | Array<Array<PressModifiers>>;
 	type?: 'auto' | 'callback' | 'click' | 'focus';
 	fn?: () => void;
 	options?: Options;
@@ -142,6 +144,7 @@ export const shortcuts: Action<HTMLElement, params | undefined> = (
 	{
 		type = 'auto',
 		keys = [],
+		modifiers = void 0,
 		fn,
 		options: { generateKbd = defaultOptions.generateKbd } = {}
 	}: params | undefined = {}
@@ -152,7 +155,7 @@ export const shortcuts: Action<HTMLElement, params | undefined> = (
 	- Run callback if function [x]
 	- Set focus if element [x]
 	- Click if <a> or <button>
-	
+
 	Based upon:
 	- Single key press [x]
 	- Multi key press [x]
@@ -191,7 +194,7 @@ export const shortcuts: Action<HTMLElement, params | undefined> = (
 	}
 
 	if (generateKbd) {
-		createKbd(keys, node);
+		createKbd(keys, modifiers, node);
 	}
 
 	let handleKeyboardShortcut: (keyPresses: Array<AllKeys>) => void;
@@ -209,14 +212,13 @@ export const shortcuts: Action<HTMLElement, params | undefined> = (
 		};
 	}
 
-	console.log('Shortcuts attached.', node);
 	$effect(() => {
 		$effect(() => {
-			if (keys && checkEquivSequence(keyPressesState, keys)) {
+			if (keys && checkEquivSequence(keyPressesState, keys) && checkModifiers(modifiers)) {
 				handleKeyboardShortcut(keyPressesState);
 				resetKeyPressesState();
 			}
-			return () => { };
+			return () => {};
 		});
 
 		return () => {
@@ -245,8 +247,51 @@ function checkEquivSequence(keyPressesState: Array<AllKeys>, keys: Array<AllKeys
 	return true;
 }
 
+// Maps PressModifiers to keys of KeyboardEvent
+export const modifiersMapping: Record<
+	PressModifiers,
+	'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+> = {
+	Alt: 'altKey',
+	Control: 'ctrlKey',
+	Meta: 'metaKey',
+	Shift: 'shiftKey'
+};
+export const modifiersState: Record<PressModifiers, boolean> = $state({
+	Alt: false,
+	Control: false,
+	Meta: false,
+	Shift: false
+});
+function checkEquivModifiers(modifiers: PressModifiers[]): boolean {
+	for (const [modifier, value] of Object.entries(modifiersState) as [PressModifiers, boolean][]) {
+		if (value !== modifiers.includes(modifier)) return false;
+	}
+	return true;
+}
+function checkModifiers(modifiers: params['modifiers']): boolean {
+	if (modifiers === void 0) return true;
+	// explicit `false` forbids the use of modifier keys
+	if (modifiers === false) {
+		if (Object.values(modifiersState).some((_) => _)) return false;
+		return true;
+	}
+
+	if (typeof modifiers[0] !== 'string') {
+		// OR -> AND structure
+		const modifiers2 = modifiers as PressModifiers[][];
+		for (const ruleset of modifiers2) {
+			if (checkEquivModifiers(ruleset)) return true;
+		}
+		return false;
+	}
+	// AND structure
+	const ruleset = modifiers as PressModifiers[];
+	return checkEquivModifiers(ruleset);
+}
+
 function isAlphaNumeric(str: string) {
-	var code, i, len;
+	let code, i, len;
 
 	for (i = 0, len = str.length; i < len; i++) {
 		code = str.charCodeAt(i);
@@ -262,11 +307,18 @@ function isAlphaNumeric(str: string) {
 	return true;
 }
 
-function createKbd(keys: Array<AllKeys>, node: HTMLElement) {
+const arrowsReplacements = {
+	ArrowLeft: '←',
+	ArrowRight: '→',
+	ArrowUp: '↑',
+	ArrowDown: '↓'
+};
+function createKbd(keys: AllKeys[], modifiers: params['modifiers'], node: HTMLElement) {
 	let lastKbd: HTMLElement;
-	keys.forEach((key) => {
+	if (keys) keys.forEach((key) => {
 		const kbd = document.createElement('kbd');
-		kbd.textContent = key;
+		if (key in arrowsReplacements) kbd.textContent = arrowsReplacements[key as keyof typeof arrowsReplacements];
+		else kbd.textContent = key;
 		if (lastKbd) {
 			lastKbd.after(kbd);
 		} else if (node.tagName == 'INPUT') {
@@ -278,4 +330,23 @@ function createKbd(keys: Array<AllKeys>, node: HTMLElement) {
 		}
 		lastKbd = kbd;
 	});
+	if (!modifiers || !modifiers.length) return;
+	if (!(typeof modifiers[0] === 'string')) modifiers = modifiers[0];
+	const modifiers2 = modifiers as PressModifiers[];
+	if (modifiers2.length) {
+		const span = document.createElement('span');
+		for (let i = 0; i < modifiers2.length; i++) {
+			const kbd = document.createElement('kbd');
+			kbd.textContent = modifiers2[i];
+			span.appendChild(kbd);
+			span.appendChild(document.createTextNode('+'));
+		};
+		if (node.tagName == 'INPUT') {
+			const inputEle = node as HTMLInputElement;
+			const firstLabel = inputEle.labels?.item(0);
+			firstLabel?.prepend(span);
+		} else {
+			node.prepend(span);
+		}
+	};
 }
