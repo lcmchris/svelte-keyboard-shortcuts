@@ -15,6 +15,11 @@
 		>
 		<div use:shortcuts={{ keys: ['c'] }} tabindex="2">Press C to Focus on me!</div>
 		<div use:shortcuts={{ keys: ['Delete'] }} tabindex="2">Press Delete to Focus on me!</div>
+		<div use:shortcuts={{ keys: ['`'] }} tabindex="2">Press ` to Focus on me!</div>
+		<div
+			use:shortcuts={{ keys: ['z'], modifiers: [['Control', 'Shift'], ['Meta', 'Shift']] }}
+			tabindex="2"
+		>Press Ctrl+Shift+Z (or Meta+Shift+Z) to Focus on me!</div>
 
 		<label>
 			F to focus on me
