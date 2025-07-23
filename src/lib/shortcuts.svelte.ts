@@ -115,7 +115,6 @@ type EditingKeys =
 	| 'Insert'
 	| 'Paste'
 	| 'Find'
-	| 'Help'
 	| 'Undo';
 
 export type AllKeys =
