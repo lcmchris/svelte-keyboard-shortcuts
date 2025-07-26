@@ -7,6 +7,10 @@ This svelte library makes adding shortcuts easy and also consolidates the displa
 
 ## Get started
 
+To install this library:
+
+`npm install -D svelte-keyboard-shortcuts`
+
 layout.svelte
 
 ```svelte
