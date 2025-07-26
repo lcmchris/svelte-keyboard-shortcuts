@@ -115,7 +115,19 @@ type NumericKeypadKeys =
 	| '7'
 	| '8'
 	| '9';
-type EditingKeys = "Backspace" | "Clear" | "Copy" | "CrSel" | "Cut" | "Delete" | "EraseEof" | "ExSel" | "Insert" | "Paste" | "Redo" | "Undo"
+type EditingKeys =
+	| 'Backspace'
+	| 'Clear'
+	| 'Copy'
+	| 'CrSel'
+	| 'Cut'
+	| 'Delete'
+	| 'EraseEof'
+	| 'ExSel'
+	| 'Insert'
+	| 'Paste'
+	| 'Redo'
+	| 'Undo';
 
 export type AllKeys =
 	| GeneralKeys
@@ -216,7 +228,7 @@ export const shortcuts: Action<HTMLElement, params | undefined> = (
 				handleKeyboardShortcut(keyPressesState);
 				resetKeyPressesState();
 			}
-			return () => { };
+			return () => {};
 		});
 
 		return () => {
